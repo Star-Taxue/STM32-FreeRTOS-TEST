@@ -25,7 +25,8 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+#include "string.h"
+#include "usart.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -128,7 +129,8 @@ void Start_LED_Task(void *argument)
   /* Infinite loop */
   for(;;)
   {
-    osDelay(1);
+    HAL_GPIO_TogglePin(LED_BLUE_GPIO_Port, LED_BLUE_Pin);
+    osDelay(500);
   }
   /* USER CODE END Start_LED_Task */
 }
@@ -143,10 +145,13 @@ void Start_LED_Task(void *argument)
 void Start_Serial_1_Task(void *argument)
 {
   /* USER CODE BEGIN Start_Serial_1_Task */
+  char msg[] = "\r\nHello World\r\n";
+
   /* Infinite loop */
   for(;;)
   {
-    osDelay(1);
+    HAL_UART_Transmit(&huart1, (uint8_t*)msg, strlen(msg)-1, HAL_MAX_DELAY);
+    osDelay(200);
   }
   /* USER CODE END Start_Serial_1_Task */
 }

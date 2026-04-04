@@ -23,6 +23,10 @@
     {
       "name": "stlink-gdbserver",
       "version": "7.13.0+st.3"
+    },
+    {
+      "name": "rtos-proxy",
+      "version": "0.18.1+st.3"
     }
   ]
 }

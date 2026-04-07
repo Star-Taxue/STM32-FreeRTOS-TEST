@@ -19,6 +19,7 @@
 
 /* Includes ------------------------------------------------------------------*/
 #include "FreeRTOS.h"
+#include "cmsis_os2.h"
 #include "task.h"
 #include "main.h"
 #include "cmsis_os.h"
@@ -27,6 +28,9 @@
 /* USER CODE BEGIN Includes */
 #include "string.h"
 #include "usart.h"
+#include "gpio.h"
+#include <stdint.h>
+#include <stdio.h>
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -46,7 +50,6 @@
 
 /* Private variables ---------------------------------------------------------*/
 /* USER CODE BEGIN Variables */
-
 /* USER CODE END Variables */
 /* Definitions for LED_Task */
 osThreadId_t LED_TaskHandle;
@@ -62,6 +65,18 @@ const osThreadAttr_t Serial_1_Task_attributes = {
   .stack_size = 128 * 4,
   .priority = (osPriority_t) osPriorityLow,
 };
+/* Definitions for Btn_Task */
+osThreadId_t Btn_TaskHandle;
+const osThreadAttr_t Btn_Task_attributes = {
+  .name = "Btn_Task",
+  .stack_size = 128 * 4,
+  .priority = (osPriority_t) osPriorityNormal,
+};
+/* Definitions for BtnQueue */
+osMessageQueueId_t BtnQueueHandle;
+const osMessageQueueAttr_t BtnQueue_attributes = {
+  .name = "BtnQueue"
+};
 
 /* Private function prototypes -----------------------------------------------*/
 /* USER CODE BEGIN FunctionPrototypes */
@@ -70,6 +85,7 @@ const osThreadAttr_t Serial_1_Task_attributes = {
 
 void Start_LED_Task(void *argument);
 void Start_Serial_1_Task(void *argument);
+void StartTaskBtn(void *argument);
 
 void MX_FREERTOS_Init(void); /* (MISRA C 2004 rule 8.1) */
 
@@ -95,6 +111,10 @@ void MX_FREERTOS_Init(void) {
   /* start timers, add new ones, ... */
   /* USER CODE END RTOS_TIMERS */
 
+  /* Create the queue(s) */
+  /* creation of BtnQueue */
+  BtnQueueHandle = osMessageQueueNew (16, sizeof(uint32_t), &BtnQueue_attributes);
+
   /* USER CODE BEGIN RTOS_QUEUES */
   /* add queues, ... */
   /* USER CODE END RTOS_QUEUES */
@@ -105,6 +125,9 @@ void MX_FREERTOS_Init(void) {
 
   /* creation of Serial_1_Task */
   Serial_1_TaskHandle = osThreadNew(Start_Serial_1_Task, NULL, &Serial_1_Task_attributes);
+
+  /* creation of Btn_Task */
+  Btn_TaskHandle = osThreadNew(StartTaskBtn, NULL, &Btn_Task_attributes);
 
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */
@@ -145,15 +168,55 @@ void Start_LED_Task(void *argument)
 void Start_Serial_1_Task(void *argument)
 {
   /* USER CODE BEGIN Start_Serial_1_Task */
-  char msg[] = "\r\nHello World\r\n";
-
+  char msg[50];
+  
+  uint32_t btn_count = 0;
+  uint32_t data_count = 0;
   /* Infinite loop */
   for(;;)
   {
+    // 从队列中获取数据
+    osMessageQueueGet(BtnQueueHandle, &data_count, NULL, osWaitForever);
+    btn_count++;
+    osDelay(1000); // 模拟处理时间
+    sprintf(msg, "\r\nButton pressed %d times, data: %d times \r\n", (int)btn_count,(int)data_count);
     HAL_UART_Transmit(&huart1, (uint8_t*)msg, strlen(msg)-1, HAL_MAX_DELAY);
-    osDelay(200);
+      
+    osDelay(10);
   }
   /* USER CODE END Start_Serial_1_Task */
+}
+
+/* USER CODE BEGIN Header_StartTaskBtn */
+/**
+* @brief Function implementing the Btn_Task thread.
+* @param argument: Not used
+* @retval None
+*/
+/* USER CODE END Header_StartTaskBtn */
+void StartTaskBtn(void *argument)
+{
+  /* USER CODE BEGIN StartTaskBtn */
+
+  uint32_t btn_flag = 0;
+  uint32_t btn_count = 0;
+  /* Infinite loop */
+  for(;;)
+  {
+    if(HAL_GPIO_ReadPin(KEY_DOWN_GPIO_Port, KEY_DOWN_Pin) == GPIO_PIN_SET)
+    {
+      btn_flag = 0; // 按键抬起
+    }
+      
+    if(HAL_GPIO_ReadPin(KEY_DOWN_GPIO_Port, KEY_DOWN_Pin) == GPIO_PIN_RESET && btn_flag == 0) // 使用标志位防止一次按下计数多次
+    {
+      btn_flag = 1; // Button flag
+      btn_count++;
+      osMessageQueuePut(BtnQueueHandle, &btn_count, 0,osWaitForever);
+    }
+    osDelay(10);
+  }
+  /* USER CODE END StartTaskBtn */
 }
 
 /* Private application code --------------------------------------------------*/

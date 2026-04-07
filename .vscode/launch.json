@@ -22,6 +22,10 @@
                 "enabled": true,
                 "port": "60000",
                 "driver": "freertos"
+            },
+            "liveWatch": {
+                "enabled": true,
+                "samplesPerSecond": "4"
             }
         }
     ]

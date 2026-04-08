@@ -4,7 +4,8 @@
     // 欲了解更多信息，请访问: https://go.microsoft.com/fwlink/?linkid=830387
     "version": "0.2.0",
     "configurations": [
-
+        // 配置切换在调试界面下拉切换
+        // st-link调试配置
         {
             "type": "stlinkgdbtarget",
             "request": "launch",
@@ -27,6 +28,34 @@
                 "enabled": true,
                 "samplesPerSecond": "4"
             }
+        },
+        // dap-link调试配置
+        {
+            "name": "Cortex Debug: DAP-Link (OpenOCD)",
+            "type": "cortex-debug",
+            "request": "launch",
+            "cwd": "${workspaceFolder}",
+            "executable": "${command:cmake.launchTargetPath}",  // 或者直接指定 .elf 文件路径
+            "servertype": "openocd",
+            "serverpath": "E:/tool/openocd-20250710/OpenOCD-20250710-0.12.0/bin/openocd.exe",       // 若未在 PATH 中则填写绝对路径
+            "searchDir": [
+                             "E:/tool/openocd-20250710/OpenOCD-20250710-0.12.0/share/openocd/scripts"
+            ],
+            "armToolchainPath": "E:/tool/14.3 rel1/bin",
+            "configFiles": [
+                "interface/cmsis-dap.cfg",       // DAP-Link 接口配置
+                "target/stm32f4x.cfg"           // 根据你的芯片更换，例如 stm32f1x.cfg 
+            ],
+            "serverArgs": [
+                "-c","adapter speed 500"
+            ],
+            "rtos": "FreeRTOS",  
+            "liveWatch": {
+                "enabled": true,
+                "samplesPerSecond": 4
+            },
+            "runToEntryPoint": "main",
         }
-    ]
+    ],
+ 
 }

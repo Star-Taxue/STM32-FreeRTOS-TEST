@@ -19,7 +19,6 @@
 
 /* Includes ------------------------------------------------------------------*/
 #include "FreeRTOS.h"
-#include "cmsis_os2.h"
 #include "task.h"
 #include "main.h"
 #include "cmsis_os.h"
@@ -84,8 +83,8 @@ const osMessageQueueAttr_t BtnQueue_attributes = {
 /* USER CODE END FunctionPrototypes */
 
 void Start_LED_Task(void *argument);
-void Start_Serial_1_Task(void *argument);
-void StartTaskBtn(void *argument);
+extern void Start_Serial_1_Task(void *argument);
+extern void StartTaskBtn(void *argument);
 
 void MX_FREERTOS_Init(void); /* (MISRA C 2004 rule 8.1) */
 
@@ -146,77 +145,14 @@ void MX_FREERTOS_Init(void) {
   * @retval None
   */
 /* USER CODE END Header_Start_LED_Task */
-void Start_LED_Task(void *argument)
+__weak void Start_LED_Task(void *argument)
 {
   /* USER CODE BEGIN Start_LED_Task */
   /* Infinite loop */
   for(;;)
   {
-    HAL_GPIO_TogglePin(LED_BLUE_GPIO_Port, LED_BLUE_Pin);
-    osDelay(200);
   }
   /* USER CODE END Start_LED_Task */
-}
-
-/* USER CODE BEGIN Header_Start_Serial_1_Task */
-/**
-* @brief Function implementing the Serial_1_Task thread.
-* @param argument: Not used
-* @retval None
-*/
-/* USER CODE END Header_Start_Serial_1_Task */
-void Start_Serial_1_Task(void *argument)
-{
-  /* USER CODE BEGIN Start_Serial_1_Task */
-  char msg[50];
-  
-  uint32_t btn_count = 0;
-  uint32_t data_count = 0;
-  /* Infinite loop */
-  for(;;)
-  {
-    // 从队列中获取数据
-    osMessageQueueGet(BtnQueueHandle, &data_count, NULL, osWaitForever);
-    btn_count++;
-    osDelay(1000); // 模拟处理时间
-    sprintf(msg, "\r\nButton pressed %d times, data: %d times \r\n", (int)btn_count,(int)data_count);
-    HAL_UART_Transmit(&huart1, (uint8_t*)msg, strlen(msg)-1, HAL_MAX_DELAY);
-      
-    osDelay(10);
-  }
-  /* USER CODE END Start_Serial_1_Task */
-}
-
-/* USER CODE BEGIN Header_StartTaskBtn */
-/**
-* @brief Function implementing the Btn_Task thread.
-* @param argument: Not used
-* @retval None
-*/
-/* USER CODE END Header_StartTaskBtn */
-void StartTaskBtn(void *argument)
-{
-  /* USER CODE BEGIN StartTaskBtn */
-
-  uint32_t btn_flag = 0;
-  uint32_t btn_count = 0;
-  /* Infinite loop */
-  for(;;)
-  {
-    if(HAL_GPIO_ReadPin(KEY_DOWN_GPIO_Port, KEY_DOWN_Pin) == GPIO_PIN_SET)
-    {
-      btn_flag = 0; // 按键抬起
-    }
-      
-    if(HAL_GPIO_ReadPin(KEY_DOWN_GPIO_Port, KEY_DOWN_Pin) == GPIO_PIN_RESET && btn_flag == 0) // 使用标志位防止一次按下计数多次
-    {
-      btn_flag = 1; // Button flag
-      btn_count++;
-      osMessageQueuePut(BtnQueueHandle, &btn_count, 0,osWaitForever);
-    }
-    osDelay(10);
-  }
-  /* USER CODE END StartTaskBtn */
 }
 
 /* Private application code --------------------------------------------------*/

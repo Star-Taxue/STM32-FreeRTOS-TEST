@@ -30,6 +30,7 @@
 #include "gpio.h"
 #include <stdint.h>
 #include <stdio.h>
+#include "Inc/app_imu.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -71,10 +72,22 @@ const osThreadAttr_t Btn_Task_attributes = {
   .stack_size = 128 * 4,
   .priority = (osPriority_t) osPriorityNormal,
 };
+/* Definitions for IMU_Task */
+osThreadId_t IMU_TaskHandle;
+const osThreadAttr_t IMU_Task_attributes = {
+  .name = "IMU_Task",
+  .stack_size = 256 * 4,
+  .priority = (osPriority_t) osPriorityLow,
+};
 /* Definitions for BtnQueue */
 osMessageQueueId_t BtnQueueHandle;
 const osMessageQueueAttr_t BtnQueue_attributes = {
   .name = "BtnQueue"
+};
+/* Definitions for IMU_Data */
+osMessageQueueId_t IMU_DataHandle;
+const osMessageQueueAttr_t IMU_Data_attributes = {
+  .name = "IMU_Data"
 };
 
 /* Private function prototypes -----------------------------------------------*/
@@ -85,6 +98,7 @@ const osMessageQueueAttr_t BtnQueue_attributes = {
 void Start_LED_Task(void *argument);
 extern void Start_Serial_1_Task(void *argument);
 extern void StartTaskBtn(void *argument);
+extern void Start_IMU_Task(void *argument);
 
 void MX_FREERTOS_Init(void); /* (MISRA C 2004 rule 8.1) */
 
@@ -114,6 +128,9 @@ void MX_FREERTOS_Init(void) {
   /* creation of BtnQueue */
   BtnQueueHandle = osMessageQueueNew (16, sizeof(uint32_t), &BtnQueue_attributes);
 
+  /* creation of IMU_Data */
+  IMU_DataHandle = osMessageQueueNew (16, sizeof(IMU_Data_t*), &IMU_Data_attributes);
+
   /* USER CODE BEGIN RTOS_QUEUES */
   /* add queues, ... */
   /* USER CODE END RTOS_QUEUES */
@@ -127,6 +144,9 @@ void MX_FREERTOS_Init(void) {
 
   /* creation of Btn_Task */
   Btn_TaskHandle = osThreadNew(StartTaskBtn, NULL, &Btn_Task_attributes);
+
+  /* creation of IMU_Task */
+  IMU_TaskHandle = osThreadNew(Start_IMU_Task, NULL, &IMU_Task_attributes);
 
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */

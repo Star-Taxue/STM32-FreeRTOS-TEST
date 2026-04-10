@@ -48,12 +48,18 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     Core/App/Tasks/Led_Task.c
     Core/App/Tasks/Uart1_Task.c
     Core/App/Tasks/Key_Task.c
+    Core/Bsp/Src/bsp_imu.c
+    Core/Bsp/Src/bsp_bmi088.c
+    Core/Drv/Src/drv_spi.c
+    Core/App/Src/app_imu.c
 )
 
 # Add include paths
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
     # Add user defined include paths
     Core/App/
+    Core/Drv/
+    Core/Bsp/
 )
 
 # Add project symbols (macros)

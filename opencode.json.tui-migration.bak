@@ -1,0 +1,14 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "theme": "opencode",
+  "provider": {
+    "google": {
+      "options": {
+        "apiKey": "sk-50SG7ia3M44i5FA96XgUkwO5m1qKYxcHtocKWfrPKynnUM4M",
+        "baseURL": "https://us.novaiapi.com/v1"
+      }
+    }
+  },
+  "model": "google/gemini-3-pro-preview",
+  "autoupdate": true
+}

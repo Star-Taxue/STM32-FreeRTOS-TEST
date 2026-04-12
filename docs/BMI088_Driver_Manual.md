@@ -164,9 +164,27 @@ if (|√(x²+y²+z²) - 1.0| < 0.3) {
 }
 ```
 
-### 5.4 YAW 角
+### 5.4 YAW 零偏校准 (减缓漂移)
 
-> 仅靠加速度计+陀螺仪**无法**消除 YAW 漂移。需要磁力计 (9轴) 才能修正航向。
+陀螺仪静止时也有微小输出（零偏），积分后持续累积导致 YAW 漂移。
+**方案：上电时设备静止，采集 N 次陀螺仪数据求平均作为零偏，后续读数减去零偏。**
+
+```c
+// 上电后调用（设备必须静止！）
+float gyro_raw[3];
+for (int i = 0; i < 200; i++) {
+    BSP_BMI088_ReadGyro(gyro_raw);
+    HAL_Delay(2);
+}
+BSP_IMU_CalibrateBias(gyro_raw, 200);  // 校准零偏
+```
+
+校准后积分公式变为：
+```
+yaw += (gyro_z - gyro_bias_z) × dt
+```
+
+> ⚠️ 零偏校准只能**减缓**漂移，不能完全消除。长时间运行仍有累积误差。彻底解决需磁力计。
 
 ---
 
@@ -180,6 +198,7 @@ void BSP_BMI088_ReadGyro(float gyro[3]);     // 单位: °/s
 
 // BSP层 - 姿态解算
 void BSP_IMU_Init(void);
+void BSP_IMU_CalibrateBias(float *gyro_raw, uint16_t samples);  // 上电零偏校准
 void BSP_IMU_Update(float *accel, float *gyro, float dt);
 void BSP_IMU_GetAngle(euler_angle_t *angle);
 ```
@@ -195,7 +214,7 @@ void BSP_IMU_GetAngle(euler_angle_t *angle);
 | 平放 Roll/Pitch ≠ 0 | 轴映射错误 | 检查 accel[0/1/2] 映射关系 |
 | 数据正负颠倒 | 大小端拼接错误 | 检查 MSB/LSB 顺序 |
 | 数据跳变 | SPI时序/延时不足 | 增加 CS 切换后的 NOP 延时 |
-| YAW 持续漂移 | 正常现象 | 需磁力计补偿 |
+| YAW 持续漂移 | 陀螺仪零偏未校准 | 上电调用 BSP_IMU_CalibrateBias() |
 
 ---
 

@@ -62,7 +62,7 @@ void Start_IMU_Task(void *argument)
         }
         
         sprintf(msg, "Roll: %d, Pitch: %d, Yaw: %d\r\n",
-                (int)angle.roll*10, (int)angle.pitch, (int)angle.yaw);
+                (int)angle.roll, (int)angle.pitch, (int)angle.yaw);
         HAL_UART_Transmit(&huart1, (uint8_t*)msg, strlen(msg), HAL_MAX_DELAY);
         
         osDelay(20);

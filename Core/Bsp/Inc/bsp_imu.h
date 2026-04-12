@@ -28,11 +28,13 @@ typedef struct {
     euler_angle_t angle;
     float alpha;
     uint32_t last_update;
+    float gyro_bias[3];     // 陀螺仪零偏 [roll, pitch, yaw]
 } complementary_filter_t;
 
 /* Exported functions prototypes ---------------------------------------------*/
 
 void BSP_IMU_Init(void);
+void BSP_IMU_CalibrateBias(float *gyro_raw, uint16_t samples);
 void BSP_IMU_Update(float *accel, float *gyro, float dt);
 void BSP_IMU_GetAngle(euler_angle_t *angle);
 

@@ -17,7 +17,24 @@ static complementary_filter_t imu_filter;
 
 void BSP_IMU_Init(void)
 {
+    imu_filter.gyro_bias[0] = 0.0f;
+    imu_filter.gyro_bias[1] = 0.0f;
+    imu_filter.gyro_bias[2] = 0.0f;
     BSP_ComplementaryFilter_Init(&imu_filter, 0.98f);
+}
+
+void BSP_IMU_CalibrateBias(float *gyro_raw, uint16_t samples)
+{
+    float sum[3] = {0};
+    for (uint16_t i = 0; i < samples; i++) {
+        sum[0] += gyro_raw[0];
+        sum[1] += gyro_raw[1];
+        sum[2] += gyro_raw[2];
+        HAL_Delay(2);
+    }
+    imu_filter.gyro_bias[0] = sum[0] / samples;
+    imu_filter.gyro_bias[1] = sum[1] / samples;
+    imu_filter.gyro_bias[2] = sum[2] / samples;
 }
 
 void BSP_ComplementaryFilter_Init(complementary_filter_t *filter, float alpha)
@@ -60,9 +77,9 @@ void BSP_ComplementaryFilter_Update(complementary_filter_t *filter,
         accel_pitch = filter->angle.pitch;
     }
     
-    float gyro_roll = filter->angle.roll + gyro[0] * dt;
-    float gyro_pitch = filter->angle.pitch + gyro[1] * dt;
-    float gyro_yaw = filter->angle.yaw + gyro[2] * dt;
+    float gyro_roll = filter->angle.roll + (gyro[0] - filter->gyro_bias[0]) * dt;
+    float gyro_pitch = filter->angle.pitch + (gyro[1] - filter->gyro_bias[1]) * dt;
+    float gyro_yaw = filter->angle.yaw + (gyro[2] - filter->gyro_bias[2]) * dt;
     
     float effective_alpha = (fabsf(accel_magnitude - 1.0f) < 0.3f) ? filter->alpha : 0.99f;
     
